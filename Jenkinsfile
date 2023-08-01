@@ -2,7 +2,6 @@ pipeline {
     agent {
         docker {
             image 'maven:3-alpine'
-            image 'maven:3.9.0'
             args '-v /root/.m2:/root/.m2'
         }
     }
@@ -24,7 +23,14 @@ pipeline {
         }
         stage('Manual Approval') {
             steps {
-                input message: 'Apakah Anda setuju untuk melanjutkan ke tahap Deploy? (Klik "Proceed" untuk mengizinkan)'
+                script {
+                    def userInput = input message: 'Apakah Anda setuju untuk melanjutkan ke tahap Deploy? (Klik "Proceed" untuk mengizinkan)', parameters: [
+                        [$class: 'BooleanParameterDefinition', name: 'APPROVAL', defaultValue: false, description: 'Klik "Proceed" untuk mengizinkan']
+                    ]
+                    if (!userInput.APPROVAL) {
+                        error("Pengguna telah membatalkan proses. Tahap Deploy dibatalkan.")
+                    }
+                }
             }
         }
         stage('Deploy') {
